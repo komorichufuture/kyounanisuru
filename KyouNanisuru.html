@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>今日は何する？</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body{
+      display: grid;
+      place-items: center;
+      background: #050a12;
+    }
+
+    .hero{
+      text-align: center;
+    }
+
+    .neon2{
+      position: relative;
+      font-family:
+        "Yu Mincho",
+        "Hiragino Mincho ProN",
+        "Hiragino Mincho Pro",
+        "Noto Serif JP",
+        "MS Mincho",
+        serif;
+      font-weight: 700;
+      font-size: clamp(64px, 10vw, 160px);
+      line-height: 1.1;
+      color: #e9feff;
+      letter-spacing: .05em;
+      text-shadow:
+        0 0 12px rgba(0,200,255,.75),
+        0 0 32px rgba(0,140,255,.5);
+    }
+
+    .neon2::before{
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: #00c8ff;
+      filter: blur(18px);
+      opacity: 1;
+      z-index: -1;
+    }
+
+    .sub{
+      margin-top: clamp(8px, 1.5vw, 16px);
+      font-family: system-ui, sans-serif;
+      font-size: clamp(12px, 1.8vw, 24px);
+      letter-spacing: .25em;
+      color: rgba(180,220,255,.65);
+      text-shadow: 0 0 6px rgba(0,160,255,.3);
+    }
+
+    /* ここから：文字だけスライド選択（JP大 + EN小） */
+    .choices{
+      margin-top: clamp(32px, 5vw, 64px);
+      display: flex;
+      justify-content: center;
+      gap: clamp(32px, 6vw, 80px);
+    }
+
+    .choice{
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .35s ease;
+    }
+
+    .choice .jp{
+      font-family:
+        "Yu Mincho",
+        "Hiragino Mincho ProN",
+        "Hiragino Mincho Pro",
+        "Noto Serif JP",
+        "MS Mincho",
+        serif;
+      font-size: clamp(28px, 4vw, 56px);
+      color: rgba(200,220,255,.35);
+      transition: all .35s ease;
+    }
+
+    .choice .en{
+      margin-top: 6px;
+      font-family: system-ui, sans-serif;
+      font-size: clamp(10px, 1.4vw, 14px);
+      letter-spacing: .25em;
+      color: rgba(160,200,255,.3);
+      transition: all .35s ease;
+    }
+
+    .choice.active{
+      transform: scale(1.15);
+    }
+
+    .choice.active .jp{
+      color: #e9feff;
+      text-shadow:
+        0 0 10px rgba(0,200,255,.8),
+        0 0 28px rgba(0,140,255,.6);
+    }
+
+    .choice.active .en{
+      color: rgba(200,235,255,.85);
+      text-shadow: 0 0 6px rgba(0,160,255,.4);
+    }
+    /* ここまで：文字だけスライド選択 */
+
+    /* おまけ：画面幅が狭いときに縮む（邪魔なら消してOK） */
+    @media (max-width: 480px){
+      .neon2{ font-size: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="neon2" data-text="今日は何する？">今日は何する？</div>
+    <div class="sub">What will you do today?</div>
+
+    <div class="choices" role="tablist" aria-label="行動選択">
+      <div class="choice active" data-value="play" tabindex="0" role="tab" aria-selected="true">
+        <div class="jp">遊ぶ</div>
+        <div class="en">PLAY</div>
+      </div>
+
+      <div class="choice" data-value="make" tabindex="0" role="tab" aria-selected="false">
+        <div class="jp">作る</div>
+        <div class="en">CREATE</div>
+      </div>
+
+      <div class="choice" data-value="watch" tabindex="0" role="tab" aria-selected="false">
+        <div class="jp">見る</div>
+        <div class="en">WATCH</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const choices = [...document.querySelectorAll('.choice')];
+    let index = 0;
+
+    function update(){
+      choices.forEach((c,i)=>{
+        const active = (i === index);
+        c.classList.toggle('active', active);
+        c.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+    }
+
+    choices.forEach((c,i)=>{
+      c.addEventListener('click', ()=>{
+        index = i;
+        update();
+      });
+    });
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowRight'){
+        index = (index + 1) % choices.length;
+        update();
+      }
+      if(e.key === 'ArrowLeft'){
+        index = (index - 1 + choices.length) % choices.length;
+        update();
+      }
+      if(e.key === 'Enter'){
+        location.href = choices[index].dataset.value + '.html';
+      }
+    });
+  </script>
+</body>
+</html>
