@@ -2,21 +2,31 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>今日は何する？</title>
   <style>
     html, body {
       height: 100%;
       margin: 0;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
     }
+    
     body{
       display: grid;
       place-items: center;
       background: #050a12;
+      touch-action: pan-y;
     }
 
     .hero{
       text-align: center;
+      width: 100%;
+      padding: 20px;
+      padding-top: 15vh;  /* ← 追加：画面高さの15%を上部余白に */
+      box-sizing: border-box;
     }
 
     .neon2{
@@ -29,13 +39,17 @@
         "MS Mincho",
         serif;
       font-weight: 700;
-      font-size: clamp(64px, 10vw, 160px);
-      line-height: 1.1;
+      font-size: clamp(48px, 12vw, 120px);
+      line-height: 1.2;
       color: #e9feff;
       letter-spacing: .05em;
       text-shadow:
         0 0 12px rgba(0,200,255,.75),
         0 0 32px rgba(0,140,255,.5);
+      margin-bottom: 8px;
+      opacity: 0;
+      animation: fadeInDown 1.2s ease-out forwards;
+      animation-delay: 0.2s;
     }
 
     .neon2::before{
@@ -49,27 +63,62 @@
     }
 
     .sub{
-      margin-top: clamp(8px, 1.5vw, 16px);
+      margin-top: clamp(8px, 2vw, 16px);
       font-family: system-ui, sans-serif;
-      font-size: clamp(12px, 1.8vw, 24px);
+      font-size: clamp(14px, 3vw, 20px);
       letter-spacing: .25em;
       color: rgba(180,220,255,.65);
       text-shadow: 0 0 6px rgba(0,160,255,.3);
+      opacity: 0;
+      animation: fadeInDown 1s ease-out forwards;
+      animation-delay: 0.8s;
     }
 
-    /* ここから：文字だけスライド選択（JP大 + EN小） */
     .choices{
-      margin-top: clamp(32px, 5vw, 64px);
+      margin-top: clamp(40px, 8vw, 80px);
       display: flex;
       justify-content: center;
-      gap: clamp(32px, 6vw, 80px);
+      align-items: center;
+      gap: clamp(20px, 5vw, 60px);
+      position: relative;
+      padding: 20px 10px;
+      opacity: 0;
+      animation: fadeInUp 1s ease-out forwards;
+      animation-delay: 1.4s;
     }
 
     .choice{
       text-align: center;
       cursor: pointer;
       user-select: none;
-      transition: transform .35s ease;
+      transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      padding: 16px 12px;
+      border-radius: 12px;
+      min-width: 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .choice:nth-child(1){
+      animation: fadeInScale 0.8s ease-out forwards;
+      animation-delay: 1.6s;
+      opacity: 0;
+    }
+
+    .choice:nth-child(2){
+      animation: fadeInScale 0.8s ease-out forwards;
+      animation-delay: 1.9s;
+      opacity: 0;
+    }
+
+    .choice:nth-child(3){
+      animation: fadeInScale 0.8s ease-out forwards;
+      animation-delay: 2.2s;
+      opacity: 0;
+    }
+
+    .choice:active{
+      transform: scale(0.95);
     }
 
     .choice .jp{
@@ -80,22 +129,25 @@
         "Noto Serif JP",
         "MS Mincho",
         serif;
-      font-size: clamp(28px, 4vw, 56px);
+      font-size: clamp(32px, 6vw, 48px);
       color: rgba(200,220,255,.35);
-      transition: all .35s ease;
+      transition: all .3s ease;
+      font-weight: 600;
     }
 
     .choice .en{
-      margin-top: 6px;
+      margin-top: 8px;
       font-family: system-ui, sans-serif;
-      font-size: clamp(10px, 1.4vw, 14px);
-      letter-spacing: .25em;
+      font-size: clamp(11px, 2.2vw, 14px);
+      letter-spacing: .3em;
       color: rgba(160,200,255,.3);
-      transition: all .35s ease;
+      transition: all .3s ease;
+      font-weight: 500;
     }
 
     .choice.active{
-      transform: scale(1.15);
+      transform: scale(1.2);
+      background: rgba(0,200,255,.05);
     }
 
     .choice.active .jp{
@@ -109,11 +161,151 @@
       color: rgba(200,235,255,.85);
       text-shadow: 0 0 6px rgba(0,160,255,.4);
     }
-    /* ここまで：文字だけスライド選択 */
 
-    /* おまけ：画面幅が狭いときに縮む（邪魔なら消してOK） */
+    .indicators{
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 32px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out forwards;
+      animation-delay: 2.8s;
+    }
+
+    .indicator{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(200,220,255,.2);
+      transition: all .3s ease;
+    }
+
+    .indicator.active{
+      background: #00c8ff;
+      box-shadow: 0 0 12px rgba(0,200,255,.6);
+      width: 24px;
+      border-radius: 4px;
+    }
+
+    .swipe-hint{
+      margin-top: 24px;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      color: rgba(160,200,255,.4);
+      letter-spacing: .2em;
+      animation: pulse 2s ease-in-out infinite;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out forwards, pulse 2s ease-in-out infinite;
+      animation-delay: 3.2s, 3.2s;
+    }
+
+    @keyframes fadeInDown{
+      from{
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to{
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp{
+      from{
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to{
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInScale{
+      from{
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to{
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes fadeIn{
+      from{
+        opacity: 0;
+      }
+      to{
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulse{
+      0%, 100%{ opacity: .4; }
+      50%{ opacity: .7; }
+    }
+
     @media (max-width: 480px){
-      .neon2{ font-size: 42px; }
+      .neon2{ 
+        font-size: 40px;
+        margin-bottom: 4px;
+      }
+      .sub{ 
+        font-size: 13px;
+      }
+      .choices{
+        gap: 16px;
+      }
+      .choice .jp{
+        font-size: 28px;
+      }
+      .choice .en{
+        font-size: 10px;
+      }
+    }
+
+    @media (max-width: 360px){
+      .choices{
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 32px;
+      }
+      .choice{
+        width: 100%;
+        max-width: 200px;
+      }
+      .choice.active{
+        transform: scale(1.1);
+      }
+    }
+
+    @media (orientation: landscape) and (max-height: 500px){
+      .hero{
+        padding: 10px;
+        padding-top: 5vh;  /* 横向き時は控えめに */
+      }
+      .neon2{
+        font-size: 36px;
+      }
+      .sub{
+        font-size: 12px;
+        margin-top: 4px;
+      }
+      .choices{
+        margin-top: 20px;
+        gap: 20px;
+      }
+      .choice .jp{
+        font-size: 24px;
+      }
+      .indicators{
+        margin-top: 16px;
+      }
+      .swipe-hint{
+        margin-top: 12px;
+        font-size: 10px;
+      }
     }
   </style>
 </head>
@@ -138,17 +330,34 @@
         <div class="en">WATCH</div>
       </div>
     </div>
+
+    <div class="indicators">
+      <div class="indicator active"></div>
+      <div class="indicator"></div>
+      <div class="indicator"></div>
+    </div>
+
+    <div class="swipe-hint">← スワイプして選択 →</div>
   </div>
 
   <script>
     const choices = [...document.querySelectorAll('.choice')];
+    const indicators = [...document.querySelectorAll('.indicator')];
     let index = 0;
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const swipeThreshold = 50;
 
     function update(){
       choices.forEach((c,i)=>{
         const active = (i === index);
         c.classList.toggle('active', active);
         c.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      
+      indicators.forEach((ind,i)=>{
+        ind.classList.toggle('active', i === index);
       });
     }
 
@@ -160,11 +369,13 @@
     });
 
     window.addEventListener('keydown', (e)=>{
-      if(e.key === 'ArrowRight'){
+      if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){
+        e.preventDefault();
         index = (index + 1) % choices.length;
         update();
       }
-      if(e.key === 'ArrowLeft'){
+      if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){
+        e.preventDefault();
         index = (index - 1 + choices.length) % choices.length;
         update();
       }
@@ -172,6 +383,48 @@
         location.href = choices[index].dataset.value + '.html';
       }
     });
+
+    const choicesContainer = document.querySelector('.choices');
+    
+    choicesContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, {passive: true});
+
+    choicesContainer.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, {passive: true});
+
+    function handleSwipe(){
+      const diff = touchStartX - touchEndX;
+      
+      if(Math.abs(diff) > swipeThreshold){
+        if(diff > 0){
+          index = (index + 1) % choices.length;
+        } else {
+          index = (index - 1 + choices.length) % choices.length;
+        }
+        update();
+        
+        if('vibrate' in navigator){
+          navigator.vibrate(10);
+        }
+      }
+    }
+
+    let lastTap = 0;
+    choicesContainer.addEventListener('touchend', (e) => {
+      const currentTime = new Date().getTime();
+      const tapLength = currentTime - lastTap;
+      
+      if(tapLength < 300 && tapLength > 0){
+        location.href = choices[index].dataset.value + '.html';
+        e.preventDefault();
+      }
+      lastTap = currentTime;
+    });
+
+    update();
   </script>
 </body>
 </html>
